@@ -11,6 +11,9 @@
 # ocamlbuild working directory
 _build/
 
+# game tests
+_test/
+
 # ocamlbuild targets
 *.byte
 *.native

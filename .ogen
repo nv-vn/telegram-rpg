@@ -1,0 +1,14 @@
+{
+  "name": "telegram-rpg",
+  "version": "1.0.0",
+  "license": "GPL-2.0",
+  "author": { "username": "nv-vn", "email": "nv@cock.li" },
+  "homepage": "https://github.com/nv-vn/telegram-rpg",
+  "synopsis": "An RPG for Telegram chats",
+  "package_type": [ "Exe", "rpg.ml" ],
+  "dependencies": [
+    { "package_name": "toml", "constraints": null },
+    { "package_name": "telegraml-dashboard", "constraints": null },
+    { "package_name": "telegraml", "constraints": null }
+  ]
+}
