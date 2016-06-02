@@ -28,6 +28,7 @@ module Rpg = MkDashboard (struct
 
     let token = config.bot.token
     and command_postfix = Some config.bot.name
+    and callback = Game.callback
 
     let commands =
       let open Api.Command in
