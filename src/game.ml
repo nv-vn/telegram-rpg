@@ -57,7 +57,7 @@ let join message =
       Hashtbl.replace player_states (user.id) (WaitForClass on_class_picked);
       let keyboard =
         let create_button text =
-          InlineKeyboardButton.create ~text ~callback_data:(Some "class_selection") () in
+          InlineKeyboardButton.create ~text ~callback_data:(Some text) () in
         ReplyMarkup.create_inline_keyboard_markup ~inline_keyboard:[List.map create_button ["Rogue"; "Mage"; "Paladin"]] () in
       Command.SendMessage (id, "Pick a class...", false, None, Some keyboard)
     end
@@ -69,15 +69,10 @@ let callback (callback : CallbackQuery.callback_query) =
   let open Message in
   let id = callback.from.id in
   match Hashtbl.find player_states id with
-  | WaitForClass fn
-    when callback.data = "class_selection" -> begin
-      begin match callback.message with
-        | Some {text = Some choice} -> fn (class_of_string choice)
-        | _ -> ()
-      end;
-      Hashtbl.replace player_states id Ready;
-      Command.Chain
-        (Command.SendMessage (id, "Sucess! You're now part of the game!", false, None, None),
-         Command.AnswerCallbackQuery (callback.id, None, false))
-    end
+  | WaitForClass fn ->
+    fn (class_of_string callback.data);
+    Hashtbl.replace player_states id Ready;
+    Command.Chain
+      (Command.SendMessage (id, "Sucess! You're now part of the game!", false, None, None),
+       Command.AnswerCallbackQuery (callback.id, None, false))
   | _ -> Command.Nothing
