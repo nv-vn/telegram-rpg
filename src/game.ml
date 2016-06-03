@@ -1,6 +1,7 @@
 open Telegram.Api
 
-let (@>>) f g x = f (g x)
+let (@<<) f g x = f (g x)
+let (@>>) f g x = g (f x)
 let (@/>) c1 c2 = Command.Chain (c1, c2)
 
 let create_button text =
@@ -114,7 +115,9 @@ let callback (callback : CallbackQuery.callback_query) =
     Hashtbl.replace player_states id pstate;
     let mid = callback.message |> function Some msg -> msg.message_id | _ -> 0
     and cid = callback.message |> (function Some {chat} -> Chat.(chat.id) | _ -> 0) |> string_of_int
-    and skillpoints = "Skill points remaining: " ^ string_of_int (n - 1) in
-    Command.EditMessageText (`ChatMessageId (cid, mid), skillpoints, None, false, None)
+    and skillpoints = "Skill points remaining: " ^ string_of_int (n - 1)
+    and keyboard = ReplyMarkup.create_inline_keyboard_markup
+        ~inline_keyboard:[List.map create_button ["Strength"; "Toughness"; "Stealth"; "Wisdom"]] () in
+    Command.EditMessageText (`ChatMessageId (cid, mid), skillpoints, None, false, Some keyboard)
     @/> Command.AnswerCallbackQuery (callback.id, None, false)
-  | _ -> Command.Nothing
+  | Ready -> Command.Nothing
