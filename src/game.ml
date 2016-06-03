@@ -1,6 +1,7 @@
 open Telegram.Api
 
-let (>>) f g x = f (g x)
+let (@>>) f g x = f (g x)
+let (@/>) c1 c2 = Command.Chain (c1, c2)
 
 let create_button text =
   InlineKeyboardButton.create ~text ~callback_data:(Some text) ()
@@ -100,21 +101,20 @@ let callback (callback : CallbackQuery.callback_query) =
        Command.AnswerCallbackQuery (callback.id, None, false))
   | WaitForSkills (1, fn, finish) ->
     let base = {strength = 0; toughness = 0; stealth = 0; wisdom = 0} in
-    let skills = (fn >> (skill_mod_of_string callback.data)) base in
+    let skills = (fn @>> (skill_mod_of_string callback.data)) base in
     finish skills;
     Hashtbl.replace player_states id Ready;
-    let mid = callback.message |> function Some msg -> msg.message_id | _ -> 0 in
-    Command.Chain
-      (Command.SendMessage (id, "Sucess! You're now part of the game!", false, None, None),
-       Command.Chain
-         (Command.AnswerCallbackQuery (callback.id, None, false),
-          Command.EditMessageText (`MessageId mid, "No skill points remaining", None, false, None)))
+    let mid = callback.message |> function Some msg -> msg.message_id | _ -> 0
+    and cid = callback.message |> (function Some {chat} -> Chat.(chat.id) | _ -> 0) |> string_of_int in
+    Command.SendMessage (id, "Sucess! You're now part of the game!", false, None, None)
+    @/> Command.AnswerCallbackQuery (callback.id, None, false)
+    @/> Command.EditMessageText (`ChatMessageId (cid, mid), "No skill points remaining", None, false, None)
   | WaitForSkills (n, fn, finish) ->
-    let pstate = WaitForSkills (n - 1, fn >> (skill_mod_of_string callback.data), finish) in
+    let pstate = WaitForSkills (n - 1, fn @>> (skill_mod_of_string callback.data), finish) in
     Hashtbl.replace player_states id pstate;
     let mid = callback.message |> function Some msg -> msg.message_id | _ -> 0
+    and cid = callback.message |> (function Some {chat} -> Chat.(chat.id) | _ -> 0) |> string_of_int
     and skillpoints = "Skill points remaining: " ^ string_of_int (n - 1) in
-    Command.Chain
-      (Command.EditMessageText (`MessageId mid, skillpoints, None, false, None),
-       Command.AnswerCallbackQuery (callback.id, None, false))
+    Command.EditMessageText (`ChatMessageId (cid, mid), skillpoints, None, false, None)
+    @/> Command.AnswerCallbackQuery (callback.id, None, false)
   | _ -> Command.Nothing
